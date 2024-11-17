@@ -84,11 +84,11 @@ It is built using Java Spring Boot & MongoDB.
 - **Place an Order**
   - User places an order by providing the required details.
   - Order Id is Generated
-  - Payment is processed by calling the **PaymentService**, which is another microservice.
+  - Payment is processed by calling the **[PaymentService](https://github.com/sumeetgodse/ScalableServicesAssignment_PaymentService)**, which is another microservice.
   - If no exceptions, order status is updated to '**PLACED**' and success message is returned.
   - if payment fails or there is any other failure, order status is updated to '**FAILED_TO_PROCESS**' and failure message is returned.
   - Order is saved in - ( Database **Orders** / Collection **order_details** )
-  - Notification about either Order Success or Order Failure is sent to user, by calling **NotificationService**, which is another microservice.
+  - Notification about either Order Success or Order Failure is sent to user, by calling **[NotificationService]()**, which is another microservice.
 
 ## Success
 
