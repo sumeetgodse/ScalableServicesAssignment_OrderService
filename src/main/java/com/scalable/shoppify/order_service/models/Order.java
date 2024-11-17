@@ -15,11 +15,11 @@ import java.util.List;
 @NoArgsConstructor
 public class Order {
     @Id
-    private Integer orderId;//Set by Service class when order is created
-    private Integer userId; //Initially given by Customer
+    private Integer orderId;
+    private Integer userId;
     private Double price;
     private List<OrderItem> orderItems;
-    private PaymentDetail paymentDetail;
+    private String orderStatus;
 
 }
 

@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,9 +30,9 @@ public class OrderController {
                     @ApiResponse(responseCode = "200", description = "Successfully retrieved list of orders"),
                     @ApiResponse(responseCode = "500", description = "Error occurred while Processing Request at the Server Side")
             })
-    public ResponseEntity<List<Order>> getAllOrders() {
-        List<Order> orders = orderService.getAllOrders();
-        return new ResponseEntity<>(orders, HttpStatus.OK);
+    public ResponseEntity<OrderResponse<List<Order>>> getAllOrders() {
+        OrderResponse<List<Order>> orderResponse = orderService.getAllOrders();
+        return new ResponseEntity<>(orderResponse, orderResponse.getStatus());
     }
 
 
@@ -69,8 +68,8 @@ public class OrderController {
                     @ApiResponse(responseCode = "201", description = "Order successfully placed"),
                     @ApiResponse(responseCode = "500", description = "Error occurred while Processing Request at the Server Side")
             })
-    public ResponseEntity<OrderResponse> placeOrder(@RequestBody OrderRequest orderRequest) {
-        OrderResponse placedOrder = orderService.placeOrder(orderRequest);
-        return new ResponseEntity<>(placedOrder, HttpStatus.CREATED);
+    public ResponseEntity<OrderResponse<Order>> placeOrder(@RequestBody OrderRequest orderRequest) {
+        OrderResponse<Order> orderResponse = orderService.placeOrder(orderRequest);
+        return new ResponseEntity<>(orderResponse,orderResponse.getStatus());
     }
 }

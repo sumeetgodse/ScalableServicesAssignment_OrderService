@@ -7,15 +7,13 @@ import com.scalable.shoppify.order_service.repositories.OrderRepository;
 import com.scalable.shoppify.order_service.models.OrderRequest;
 import com.scalable.shoppify.order_service.models.OrderResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 
 @Service
@@ -30,70 +28,109 @@ public class OrderService {
         this.restTemplate = restTemplate;
     }
 
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
+    public OrderResponse<List<Order>> getAllOrders() {
+        try {
+            List<Order> orders = orderRepository.findAll();
+            return OrderResponse.<List<Order>>builder().result(orders).status(HttpStatus.OK).message("Successfully Retrieved Orders").build();
+        } catch (Exception exception) {
+            log.error(exception.getMessage());
+            return OrderResponse.<List<Order>>builder()
+                    .result(Collections.EMPTY_LIST)
+                    .message("Failed to retrieve Orders"+exception.getMessage())
+                    .status(HttpStatus.OK).build();
+        }
     }
 
-    public OrderResponse placeOrder(OrderRequest orderRequest) {
+    public OrderResponse<Order> placeOrder(OrderRequest orderRequest) {
         Order order = new Order();
+
+        Map<String, Object> notificationsPayload = new HashMap<>();
+        notificationsPayload.put("userId", order.getUserId());
+
+        String userMessage = "";
+        HttpStatus httpStatus = HttpStatus.CREATED;
+
         try {
-            //Generating Random Integer Id
+            //Generating Random Integer Id for Order Id
             order.setOrderId(generateOrderId());
 
             //Setting from Customer Request
             order.setUserId(orderRequest.getUserId());
             order.setPrice(orderRequest.getPrice());
             order.setOrderItems(orderRequest.getOrderItems());
-            order.setPaymentDetail(orderRequest.getPaymentDetail());
-
-            // Saving Order to Database
-            orderRepository.save(order);
 
             // Making Payment via PaymentService
             PaymentDetail paymentDetail = orderRequest.getPaymentDetail();
 
-            if (paymentDetail.getCardNumber() != null) {
+            Map<String, String> response;
 
+            if (paymentDetail.getCardNumber() != null) {
                 Map<String, Object> requestPayload = new HashMap<>();
                 requestPayload.put("cardNum", paymentDetail.getCardNumber());
                 requestPayload.put("cardExpiry", paymentDetail.getCardExpiry());
                 requestPayload.put("cvv", paymentDetail.getCvv());
                 requestPayload.put("orderId", order.getOrderId());
                 requestPayload.put("userId", order.getUserId());
-                makePostCall(requestPayload, "http://localhost:3005/pay/card");
+                response = makePostCall(requestPayload, "http://localhost:3005/pay/card");
             } else {
                 Map<String, Object> requestPayload = new HashMap<>();
                 requestPayload.put("upiNumber", paymentDetail.getUpiNumber());
                 requestPayload.put("orderId", order.getOrderId());
                 requestPayload.put("userId", order.getUserId());
-                makePostCall(requestPayload, "http://localhost:3005/pay/upi");
+                response = makePostCall(requestPayload, "http://localhost:3005/pay/upi");
             }
 
-            // Notifying User via NotificationService
-            Map<String, Object> requestPayload = new HashMap<>();
-            requestPayload.put("userId", order.getUserId());
-            requestPayload.put("message", "Your order with order id " + order.getOrderId() + " is placed successfully");
-//            makePostCall(requestPayload, "http://localhost:8083/notify");
+            String status = response.get("message");
 
-            return OrderResponse.builder().message("Order Placed Successfully").status(HttpStatus.OK.value()).build();
+            // Check if Payment was success
+            if ("Payment FAILED!".equals(status)) {
+                throw new RuntimeException(response.get("errorMessage"));
+            } else {
+                // Update Order Status
+                order.setOrderStatus("PLACED");
+                userMessage = "Your order with order id " + order.getOrderId() + " is placed successfully";
+                //Mark Success Notification
+                notificationsPayload.put("message", userMessage);
+            }
 
         } catch (Exception exception) {
-            log.error("Error occurred while placing order: {}", exception.getMessage());
-            Map<String, Object> requestPayload = new HashMap<>();
-            requestPayload.put("userId", order.getUserId());
-            requestPayload.put("message", "Error occurred while placing order " + exception.getMessage());
-//            makePostCall(requestPayload, "http://localhost:8083/notify");
-            return OrderResponse.builder().message("Error occurred while placing order").status(HttpStatus.INTERNAL_SERVER_ERROR.value()).build();
+            //Log the error message
+            log.error(exception.getMessage());
+
+            //Update Order Status
+            order.setOrderStatus("FAILED_TO_PROCESS");
+
+            // Set User Message
+            userMessage = "Failed to process order - " + exception.getMessage();
+
+            // Set HTTP Status
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+
+            //Mark Failure Notification
+            notificationsPayload.put("message", userMessage);
+
+        } finally {
+            // Saving Order to Database
+            orderRepository.save(order);
+
+            //Sending Notifications
+            //makePostCall(notificationsPayload, "http://localhost:8083/notify");
+
         }
+
+        //Return Response
+        return OrderResponse.<Order>builder().result(order).message(userMessage).status(httpStatus).build();
     }
 
-    private void makePostCall(Object requestPayload, String url) {
+    private Map<String, String> makePostCall(Object requestPayload, String url) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Content-Type", "application/json");
         HttpEntity<Object> entity = new HttpEntity<>(requestPayload, headers);
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-        log.info("Response: {}", response.getBody());
+        ResponseEntity<Map<String, String>> response = restTemplate.exchange(url, HttpMethod.POST, entity, new ParameterizedTypeReference<>() {
+        });
+        return response.getBody();
     }
+
 
     private int generateOrderId() {
         // Generate a random number between 101 and 500 (inclusive)
