@@ -45,7 +45,6 @@ public class OrderService {
         Order order = new Order();
 
         Map<String, Object> notificationsPayload = new HashMap<>();
-        notificationsPayload.put("userId", order.getUserId());
 
         String userMessage = "";
         HttpStatus httpStatus = HttpStatus.CREATED;
@@ -112,9 +111,11 @@ public class OrderService {
         } finally {
             // Saving Order to Database
             orderRepository.save(order);
+            notificationsPayload.put("userId", order.getUserId());
+            notificationsPayload.put("orderId", order.getOrderId());
 
             //Sending Notifications
-            //makePostCall(notificationsPayload, "http://localhost:8083/notify");
+            makePostCall(notificationsPayload, "http://localhost:3006/notify");
 
         }
 
