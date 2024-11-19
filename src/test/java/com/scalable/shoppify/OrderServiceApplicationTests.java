@@ -1,4 +1,4 @@
-package com.scalable.shoppify.order_service;
+package com.scalable.shoppify;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

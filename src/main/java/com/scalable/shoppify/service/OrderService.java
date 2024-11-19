@@ -1,11 +1,11 @@
-package com.scalable.shoppify.order_service.service;
+package com.scalable.shoppify.service;
 
-import com.scalable.shoppify.order_service.models.Order;
-import com.scalable.shoppify.order_service.models.PaymentDetail;
-import com.scalable.shoppify.order_service.repositories.OrderRepository;
+import com.scalable.shoppify.model.OrderRequest;
+import com.scalable.shoppify.model.OrderResponse;
+import com.scalable.shoppify.model.PaymentDetail;
+import com.scalable.shoppify.model.Order;
+import com.scalable.shoppify.repository.OrderRepository;
 
-import com.scalable.shoppify.order_service.models.OrderRequest;
-import com.scalable.shoppify.order_service.models.OrderResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -21,10 +21,12 @@ import java.util.*;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final KafkaProducerService kafkaProducerService;
     private final RestTemplate restTemplate;
 
-    public OrderService(OrderRepository orderRepository, RestTemplate restTemplate) {
+    public OrderService(OrderRepository orderRepository, KafkaProducerService kafkaProducerService, RestTemplate restTemplate) {
         this.orderRepository = orderRepository;
+        this.kafkaProducerService = kafkaProducerService;
         this.restTemplate = restTemplate;
     }
 
@@ -36,7 +38,7 @@ public class OrderService {
             log.error(exception.getMessage());
             return OrderResponse.<List<Order>>builder()
                     .result(Collections.EMPTY_LIST)
-                    .message("Failed to retrieve Orders"+exception.getMessage())
+                    .message("Failed to retrieve Orders" + exception.getMessage())
                     .status(HttpStatus.OK).build();
         }
     }
@@ -111,6 +113,12 @@ public class OrderService {
         } finally {
             // Saving Order to Database
             orderRepository.save(order);
+            notificationsPayload.put("userId", order.getUserId());
+            notificationsPayload.put("orderId", order.getOrderId());
+
+            // Update Inventory
+            kafkaProducerService.sendMessage(order);
+
             notificationsPayload.put("userId", order.getUserId());
             notificationsPayload.put("orderId", order.getOrderId());
 
