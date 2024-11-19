@@ -1,10 +1,9 @@
-package com.scalable.shoppify.order_service.models;
+package com.scalable.shoppify.model;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Setter
@@ -16,7 +15,7 @@ import java.util.List;
 public class Order {
     @Id
     private Integer orderId;
-    private Integer userId;
+    private String userId;
     private Double price;
     private List<OrderItem> orderItems;
     private String orderStatus;

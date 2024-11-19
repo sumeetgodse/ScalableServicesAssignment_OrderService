@@ -35,14 +35,13 @@ It is built using Java Spring Boot & MongoDB.
   - Request Body:
     ```json
     {
-      "userId": 1,
+      "userId": "1",
       "price": 100,
       "orderItems": [
         {
           "orderItemId": 1,
-          "menuItemId": 2,
           "quantity": 4,
-          "itemPrice": 25
+          "price": 25
         }
       ],
       "paymentDetail": {
@@ -54,14 +53,13 @@ It is built using Java Spring Boot & MongoDB.
     ```
     ```json
     {
-      "userId": 1,
+      "userId": "1",
       "price": 100,
       "orderItems": [
         {
           "orderItemId": 1,
-          "menuItemId": 2,
           "quantity": 4,
-          "itemPrice": 25
+          "price": 25
         }
       ],
       "paymentDetail": {
@@ -88,6 +86,7 @@ It is built using Java Spring Boot & MongoDB.
   - If no exceptions, order status is updated to '**PLACED**' and success message is returned.
   - if payment fails or there is any other failure, order status is updated to '**FAILED_TO_PROCESS**' and failure message is returned.
   - Order is saved in - ( Database **Orders** / Collection **order_details** )
+  - Inventory is updated by sending the order information onto InventoryService's Kafka Topic `inventory-input-topic`.
   - Notification about either Order Success or Order Failure is sent to user, by calling **[NotificationService]()**, which is another microservice.
 
 ## Success

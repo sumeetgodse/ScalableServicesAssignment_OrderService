@@ -1,4 +1,4 @@
-package com.scalable.shoppify.order_service.models;
+package com.scalable.shoppify.model;
 
 import lombok.Builder;
 import lombok.Getter;

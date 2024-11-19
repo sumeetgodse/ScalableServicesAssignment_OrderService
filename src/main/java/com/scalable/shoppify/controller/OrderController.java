@@ -1,9 +1,9 @@
-package com.scalable.shoppify.order_service.controller;
+package com.scalable.shoppify.controller;
 
-import com.scalable.shoppify.order_service.models.Order;
-import com.scalable.shoppify.order_service.models.OrderRequest;
-import com.scalable.shoppify.order_service.models.OrderResponse;
-import com.scalable.shoppify.order_service.service.OrderService;
+import com.scalable.shoppify.model.Order;
+import com.scalable.shoppify.model.OrderRequest;
+import com.scalable.shoppify.model.OrderResponse;
+import com.scalable.shoppify.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -45,14 +45,13 @@ public class OrderController {
                             schema = @Schema(implementation = OrderRequest.class),
                             examples = @ExampleObject(
                                     value = "{\n" +
-                                            "  \"userId\": 1,\n" +
+                                            "  \"userId\": \"1\",\n" +
                                             "  \"price\": 100,\n" +
                                             "  \"orderItems\": [\n" +
                                             "    {\n" +
                                             "      \"orderItemId\": 1,\n" +
-                                            "      \"menuItemId\": 2,\n" +
                                             "      \"quantity\": 4,\n" +
-                                            "      \"itemPrice\": 25\n" +
+                                            "      \"price\": 25\n" +
                                             "    }\n" +
                                             "  ],\n" +
                                             "  \"paymentDetail\": {\n" +

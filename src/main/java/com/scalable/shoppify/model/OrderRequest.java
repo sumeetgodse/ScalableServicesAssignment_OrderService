@@ -1,4 +1,4 @@
-package com.scalable.shoppify.order_service.models;
+package com.scalable.shoppify.model;
 
 
 import lombok.*;
@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderRequest {
-    private Integer userId;
+    private String userId;
     private Double price;
     private List<OrderItem> orderItems;
     private PaymentDetail paymentDetail;

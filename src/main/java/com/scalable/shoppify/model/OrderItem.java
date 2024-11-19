@@ -1,4 +1,4 @@
-package com.scalable.shoppify.order_service.models;
+package com.scalable.shoppify.model;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
